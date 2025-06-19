@@ -4,17 +4,12 @@ import pandas as pd
 from prophet import Prophet
 from sqlalchemy import create_engine
 
-# loading data
+# Load data
 df = pd.read_csv("data/SP500.csv")
-df.head()
-
-
 df["DATE"] = pd.to_datetime(df["DATE"])
-df = df.rename(
-    columns={"DATE": "ds", "S&P 500 Index": "y"}
-)  # this is because of how prophet expects the columns to be
+df = df.rename(columns={"DATE": "ds", "S&P 500 Index": "y"})
 
-# plotting raw data
+# Plot raw data
 plt.figure(figsize=(12, 5))
 plt.plot(df["ds"], df["y"])
 plt.title("S&P 500 Index Over Time")
@@ -23,29 +18,38 @@ plt.ylabel("Index Value")
 plt.grid(True)
 plt.show()
 
-
-# initializing fit prophet model
+# Initialize Prophet with improved parameters
 model = Prophet(
-    daily_seasonality=True, yearly_seasonality=True, seasonality_mode="multiplicative"
+    daily_seasonality=True,
+    yearly_seasonality=True,
+    seasonality_mode="additive",  # More stable for financial data
+    changepoint_prior_scale=0.01,  # Tighter trend control
+    n_changepoints=100,  # More flexibility to adapt to long-term data
 )
+
+# Add quarterly seasonality
+model.add_seasonality(name="quarterly", period=91.25, fourier_order=8)
+
+# Fit model
 model.fit(df)
 
-# create future dataframe
-future = model.make_future_dataframe(periods=180)  # 180 days into the future
+# Forecast into the future
+future = model.make_future_dataframe(periods=180)
 forecast = model.predict(future)
 
-# plot forecast
+# Plot forecast
 fig1 = model.plot(forecast)
-plt.title("S&P 500 Forecast with Prophet")
+plt.title("S&P 500 Forecast with Prophet (Tightened Trend)")
 plt.xlabel("Date")
 plt.ylabel("Index Value")
+plt.grid(True)
 plt.show()
 
-# plot forecast components
+# Plot components (trend, yearly, quarterly, etc.)
 fig2 = model.plot_components(forecast)
 plt.show()
 
-
+# Export forecast to MySQL
 forecast_df = forecast[["ds", "yhat", "yhat_lower", "yhat_upper"]].copy()
 forecast_df.columns = ["date", "prediction", "lower_bound", "upper_bound"]
 
