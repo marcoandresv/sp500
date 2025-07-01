@@ -77,5 +77,18 @@ fig2 = model.plot_components(forecast)
 forecast_df = forecast[["ds", "yhat", "yhat_lower", "yhat_upper"]].copy()
 forecast_df.columns = ["date", "prediction", "lower_bound", "upper_bound"]
 
-engine = create_engine("mysql+pymysql://root:password@localhost/timeseries")
-forecast_df.to_sql("sp500_forecast", con=engine, if_exists="replace", index=False)
+# Save forecast to MySQL database `spdata` in a new table called `timeseries_forecast`
+MYSQL_USER = "root"
+MYSQL_PASSWORD = "password"
+MYSQL_HOST = "localhost"
+MYSQL_PORT = 3306
+MYSQL_DB = "spdata"
+MYSQL_TABLE = "timeseries_forecast"
+
+# Create engine and write to MySQL
+engine = create_engine(
+    f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}"
+)
+
+forecast_df.to_sql(MYSQL_TABLE, con=engine, if_exists="replace", index=False)
+print(f"✅ Forecast saved to MySQL table `{MYSQL_DB}.{MYSQL_TABLE}`")

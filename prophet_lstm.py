@@ -7,6 +7,7 @@ import pandas as pd
 from prophet import Prophet
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.preprocessing import StandardScaler
+from sqlalchemy import create_engine
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import LSTM, Dense, Dropout
 from tensorflow.keras.models import Sequential
@@ -578,6 +579,21 @@ def main():
     # Combined results
     combined_results = prophet_results.merge(hybrid_results, on="Date", how="inner")
     combined_results.to_csv("data/combined_forecasts_improved.csv", index=False)
+
+    # Save to MySQL
+    MYSQL_USER = "root"
+    MYSQL_PASSWORD = "password"
+    MYSQL_HOST = "localhost"
+    MYSQL_PORT = 3306
+    MYSQL_DB = "spdata"
+    MYSQL_TABLE = "enhanced_forecast"
+
+    engine = create_engine(
+        f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}"
+    )
+
+    combined_results.to_sql(MYSQL_TABLE, con=engine, if_exists="replace", index=False)
+    print(f"✅ Forecast saved to MySQL table `{MYSQL_DB}.{MYSQL_TABLE}`")
 
     print("\nForecasts saved to:")
     print("- data/prophet_forecast.csv")
