@@ -567,7 +567,7 @@ class EnhancedSP500Forecaster:
             print(f"✅ Results saved to MySQL table `{MYSQL_DB}.{MYSQL_TABLE}`")
         except Exception as e:
             print(f"❌ Error saving to MySQL: {e}")
-            forecast_df.to_csv("ensemble_forecast.csv", index=False)
+            forecast_df.to_csv("data/ensemble_forecast.csv", index=False)
             print("✅ Results saved to 'ensemble_forecast.csv'")
 
 
